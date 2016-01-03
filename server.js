@@ -1,4 +1,4 @@
-// server.js
+/* server.js */
 
 var express = require('express');
 var app = express();
@@ -13,20 +13,31 @@ app.use(express.static(__dirname + '/public'));
 app.get('/', function(req, res) {
   res.render('pad');
 });
-app.get('/(:id)', function(req,res) {
-	res.render('pad');
+app.get('/(:id)', function(req, res) {
+  res.render('pad');
 });
 
-// get ShareJS dependencies
+// get sharejs dependencies
 var sharejs = require('share');
-require('redis');
 
-// options for ShareJS
+// set up redis server
+var redisClient;
+console.log("-------------------");
+console.log(process.env.REDISTOGO_URL);
+if (process.env.REDISTOGO_URL) {
+  var rtg   = require("url").parse(process.env.REDISTOGO_URL);
+  redisClient = require("redis").createClient(rtg.port, rtg.hostname);
+  redisClient.auth(rtg.auth.split(":")[1]);
+} else {
+  redisClient = require("redis").createClient();
+}
+
+// options for sharejs 
 var options = {
-	db: {type: 'redis'}
+  db: {type: 'redis', client: redisClient}
 };
 
-// Attach the express server to ShareJS
+// attach the express server to sharejs
 sharejs.server.attach(app, options);
 
 // listen on port 8000 (for localhost) or the port defined for heroku
